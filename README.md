@@ -60,6 +60,19 @@ An advanced AI-powered web application for analyzing gearbox vibration data to d
    ```bash
    python app.py
    ```
+   
+   **For development with debug mode:**
+   ```bash
+   # Linux/macOS
+   export FLASK_DEBUG=true
+   python app.py
+   
+   # Windows
+   set FLASK_DEBUG=true
+   python app.py
+   ```
+   
+   **Note:** Debug mode should never be enabled in production as it poses security risks.
 
 2. **Open your web browser** and navigate to:
    ```
