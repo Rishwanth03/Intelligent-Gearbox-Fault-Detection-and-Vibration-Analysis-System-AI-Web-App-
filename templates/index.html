@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Gearbox Fault Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .upload-section {
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+        
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f0f1f7;
+        }
+        
+        .upload-section.drag-over {
+            background: #e8ebf7;
+            border-color: #764ba2;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        
+        .file-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .file-name {
+            margin-top: 15px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .analyze-btn {
+            background: #28a745;
+            color: white;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        .analyze-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .analyze-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            margin: 30px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .status-card {
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-card.healthy {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+        }
+        
+        .status-card.slight {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+        }
+        
+        .status-card.moderate {
+            background: #fff3cd;
+            border-left: 5px solid #fd7e14;
+        }
+        
+        .status-card.severe {
+            background: #f8d7da;
+            border-left: 5px solid #dc3545;
+        }
+        
+        .status-card.critical {
+            background: #f8d7da;
+            border-left: 5px solid #721c24;
+        }
+        
+        .status-card h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .fault-score {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .fault-types {
+            margin-top: 20px;
+        }
+        
+        .fault-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .recommendations {
+            background: #e7f3ff;
+            border-left: 5px solid #007bff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .recommendations h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        
+        .recommendations ul {
+            list-style-position: inside;
+            color: #333;
+        }
+        
+        .recommendations li {
+            margin: 8px 0;
+        }
+        
+        .visualizations {
+            margin-top: 30px;
+        }
+        
+        .viz-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .viz-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .viz-card img {
+            width: 100%;
+            border-radius: 5px;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #dc3545;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .feature-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-item .label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+        
+        .feature-item .value {
+            color: #667eea;
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+        
+        .info-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .info-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .info-section ul {
+            list-style-position: inside;
+            color: #555;
+        }
+        
+        .info-section li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Intelligent Gearbox Fault Detection System</h1>
+            <p>Advanced Vibration Analysis with AI-Powered Diagnostics</p>
+        </div>
+        
+        <div class="content">
+            <div class="info-section">
+                <h3>📋 Supported File Formats</h3>
+                <ul>
+                    <li>CSV files (.csv)</li>
+                    <li>Text files (.txt)</li>
+                    <li>Excel files (.xlsx, .xls)</li>
+                    <li>MATLAB files (.mat)</li>
+                </ul>
+                <p style="margin-top: 10px; color: #666;">
+                    <strong>Note:</strong> Files should contain vibration data in a single column or as the first numeric column.
+                </p>
+            </div>
+            
+            <div class="upload-section" id="uploadSection">
+                <h2>📁 Upload Vibration Data</h2>
+                <p style="margin: 15px 0; color: #666;">
+                    Drag and drop your file here or click to browse
+                </p>
+                
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" class="file-input" 
+                           accept=".csv,.txt,.xlsx,.xls,.mat">
+                    <label for="fileInput" class="file-label">
+                        Choose File
+                    </label>
+                </div>
+                
+                <div class="file-name" id="fileName"></div>
+                
+                <button class="analyze-btn" id="analyzeBtn" disabled>
+                    Analyze Vibration Data
+                </button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="text-align: center; margin-top: 15px; color: #666;">
+                    Analyzing vibration data... Please wait.
+                </p>
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            
+            <div class="results" id="results">
+                <div class="status-card" id="statusCard">
+                    <h2>Analysis Results</h2>
+                    <div>
+                        <strong>Damage Level:</strong> 
+                        <span id="damageLevel" style="font-size: 1.5em;"></span>
+                    </div>
+                    <div class="fault-score" id="faultScore"></div>
+                    <div><strong>Status:</strong> <span id="faultStatus"></span></div>
+                    
+                    <div class="fault-types" id="faultTypes"></div>
+                    
+                    <div class="recommendations" id="recommendations"></div>
+                </div>
+                
+                <div class="viz-card">
+                    <h3>📊 Extracted Features</h3>
+                    <div class="features-grid" id="featuresGrid"></div>
+                </div>
+                
+                <div class="visualizations" id="visualizations"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const uploadSection = document.getElementById('uploadSection');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        let selectedFile = null;
+        
+        // File selection
+        fileInput.addEventListener('change', function(e) {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                fileName.textContent = `Selected: ${selectedFile.name}`;
+                analyzeBtn.disabled = false;
+            }
+        });
+        
+        // Drag and drop
+        uploadSection.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadSection.classList.add('drag-over');
+        });
+        
+        uploadSection.addEventListener('dragleave', function(e) {
+            uploadSection.classList.remove('drag-over');
+        });
+        
+        uploadSection.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadSection.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                fileInput.files = files;
+                fileName.textContent = `Selected: ${selectedFile.name}`;
+                analyzeBtn.disabled = false;
+            }
+        });
+        
+        // Analyze button
+        analyzeBtn.addEventListener('click', async function() {
+            if (!selectedFile) return;
+            
+            // Hide previous results and errors
+            results.style.display = 'none';
+            errorMessage.style.display = 'none';
+            
+            // Show loading
+            loading.style.display = 'block';
+            analyzeBtn.disabled = true;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    displayResults(data.results, data.visualizations);
+                } else {
+                    showError(data.error || 'An error occurred during analysis');
+                }
+            } catch (error) {
+                showError('Failed to connect to the server: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+                analyzeBtn.disabled = false;
+            }
+        });
+        
+        function displayResults(analysisResults, visualizations) {
+            // Update status card
+            const statusCard = document.getElementById('statusCard');
+            const damageLevel = analysisResults.damage_level;
+            statusCard.className = 'status-card ' + damageLevel;
+            
+            document.getElementById('damageLevel').textContent = 
+                damageLevel.charAt(0).toUpperCase() + damageLevel.slice(1);
+            
+            document.getElementById('faultScore').textContent = 
+                'Fault Score: ' + (analysisResults.fault_score * 100).toFixed(1) + '%';
+            
+            document.getElementById('faultStatus').textContent = 
+                analysisResults.is_faulty ? '⚠️ Fault Detected' : '✅ Normal Operation';
+            
+            // Display fault types
+            const faultTypesDiv = document.getElementById('faultTypes');
+            if (analysisResults.fault_types.length > 0) {
+                faultTypesDiv.innerHTML = '<h3 style="margin-top: 20px;">Detected Fault Types:</h3>';
+                analysisResults.fault_types.forEach(fault => {
+                    const faultItem = document.createElement('div');
+                    faultItem.className = 'fault-item';
+                    faultItem.innerHTML = `
+                        <strong>${fault.type.replace(/_/g, ' ').toUpperCase()}</strong>
+                        <br>
+                        <span style="color: #666;">${fault.description}</span>
+                        <br>
+                        <span style="color: #667eea;">Confidence: ${(fault.confidence * 100).toFixed(0)}%</span>
+                    `;
+                    faultTypesDiv.appendChild(faultItem);
+                });
+            } else {
+                faultTypesDiv.innerHTML = '';
+            }
+            
+            // Display recommendations
+            const recommendationsDiv = document.getElementById('recommendations');
+            if (analysisResults.recommendations.length > 0) {
+                recommendationsDiv.innerHTML = '<h3>💡 Recommendations:</h3><ul>';
+                analysisResults.recommendations.forEach(rec => {
+                    recommendationsDiv.innerHTML += `<li>${rec}</li>`;
+                });
+                recommendationsDiv.innerHTML += '</ul>';
+            }
+            
+            // Display features
+            const featuresGrid = document.getElementById('featuresGrid');
+            featuresGrid.innerHTML = '';
+            const features = analysisResults.time_features;
+            const featureLabels = {
+                'rms': 'RMS',
+                'peak': 'Peak',
+                'std': 'Std Dev',
+                'crest_factor': 'Crest Factor',
+                'kurtosis': 'Kurtosis',
+                'peak_to_peak': 'Peak-to-Peak'
+            };
+            
+            for (const [key, label] of Object.entries(featureLabels)) {
+                if (features[key] !== undefined) {
+                    const featureItem = document.createElement('div');
+                    featureItem.className = 'feature-item';
+                    featureItem.innerHTML = `
+                        <div class="label">${label}</div>
+                        <div class="value">${features[key].toFixed(3)}</div>
+                    `;
+                    featuresGrid.appendChild(featureItem);
+                }
+            }
+            
+            // Display visualizations
+            const visualizationsDiv = document.getElementById('visualizations');
+            visualizationsDiv.innerHTML = '';
+            
+            const vizTitles = {
+                'time_domain': 'Time Domain Signal',
+                'frequency_domain': 'Frequency Domain (FFT)',
+                'spectrogram': 'Spectrogram',
+                'features': 'Feature Analysis'
+            };
+            
+            for (const [key, title] of Object.entries(vizTitles)) {
+                if (visualizations[key]) {
+                    const vizCard = document.createElement('div');
+                    vizCard.className = 'viz-card';
+                    vizCard.innerHTML = `
+                        <h3>${title}</h3>
+                        <img src="data:image/png;base64,${visualizations[key]}" alt="${title}">
+                    `;
+                    visualizationsDiv.appendChild(vizCard);
+                }
+            }
+            
+            // Show results
+            results.style.display = 'block';
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function showError(message) {
+            errorMessage.textContent = '❌ Error: ' + message;
+            errorMessage.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
